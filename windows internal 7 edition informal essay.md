@@ -34,3 +34,15 @@ I always see the term `Marshalling`, but I never know what does it mean, today I
    or from one program to another
    
 in a word, marshalling is object transition
+
+Windows Runtime
+
+Win8 introduced a new API which supporting runtime called Windows Runtime -- WinRT
+do not be confused with Windows RT, Windows RT is a build of operate system, which running on
+ARM processor, and this build didn't last for a long time
+
+WinRT consists of platform services aimed particularly at app developers for the so-called
+Windows Apps (formerly known as Metro Apps, Modern Apps, Immersive Apps and Windows Store Apps)
+
+from an API perspective, WinRT is built on top of COM, by adding various extensions to the
+base COM infrastructure
