@@ -94,3 +94,15 @@ at the highest level of abstraction, a windows process comprises the following:
    with the process, as well as the AppContainer identifier and its related sandboxing information
  - A process ID
  - At least one thread of execution, `empty` (no thread) process is allowed, although it's useless, it can exist
+
+there are plenty of tools to view information of process, the most popular of them is task manager, which
+is built with windows OS, but there is no such thing as `Task` in windows kernel, so it is a bit odd to call
+it `Task Manager`
+
+so there is a hot key `Ctrl+Shift+Esc` to start taskmgr.exe, I used to open it with Ctrl+Alt+Del, and then click
+`TaskmManager`, didn't even know there is a hot key for itself
+
+there is only parent-child relationship in windows, no grandparent, there is no link between grandparent and child
+check this video: https://youtu.be/tmgPBP3wr7k
+
+
