@@ -221,8 +221,19 @@ Some processors differentiate between such modes by using the term `code privile
 
 this division will make sure that a misbehaving application can't disrupt the stability of the system as a whole
 
-x86 and x64 architecture define four privilege levels (or rings) to protect system code and data from being overwritten either inadvertently or maliciously
+x86 and x64 architecture define four privilege levels (or rings) to protect system code and data from being overwritten either inadvertently or maliciously by code of lesser privilege
 
+in Windows, kernel mode running at ring 0, and ring 3 for user mode
+
+the reason Windows only uses two levels is that some hardware architectures, such as ARM and MIPS/Alpha, implemented only two privilege levels
+
+for process, each of them has its own private memory space, but for kernel-mode os and device-driver code, only one single virtual address space exists, and they share it
+
+every page in virtual memory is tagged to indicate what access mode the processor must be in to read and/or write this page
+
+pages in system space can be accessed only from kernel mode, whereas all pages in the user address space are accessible from user mode and kernel mode
+
+read-only pages (such as those that contains static data) are not writable from any mode
 
 
 
