@@ -215,7 +215,13 @@ Kernel mode VS. User mode
 to protect user applications from accessing and/or modifying critical OS data, Windows users two processor
 access modes: user and kernel mode
 
-Kernel mode refers to a mode of execution 
+Kernel mode refers to a mode of execution in a processor that grants access to all system memory and all CPU instructions
+
+Some processors differentiate between such modes by using the term `code privilege` or `ring level`, while others use terms such as `supervisor mode` and `application mode`
+
+this division will make sure that a misbehaving application can't disrupt the stability of the system as a whole
+
+x86 and x64 architecture define four privilege levels (or rings) to protect system code and data from being overwritten either inadvertently or maliciously
 
 
 
