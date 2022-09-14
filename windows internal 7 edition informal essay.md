@@ -105,4 +105,19 @@ so there is a hot key `Ctrl+Shift+Esc` to start taskmgr.exe, I used to open it w
 there is only parent-child relationship in windows, no grandparent, there is no link between grandparent and child
 check this video: https://youtu.be/tmgPBP3wr7k
 
+with Process Explorer, we can get more information about process and thread than built-in taskmgr.exe
+
+ - A process security token
+ - Highlighting to show changes in the process, thread, DLLs and handles list
+ - ...
+ - the ability to suspend a process or thread
+ - the ability to kill an individual thread
+ - ...
+
+viewing process details with Process Explorer
+
+first, we'll need to configure symbol path, just like using windbg,
+![image](https://user-images.githubusercontent.com/48377190/190069959-778248ac-b6f9-4da2-9f99-cb5a9a758378.png)
+![image](https://user-images.githubusercontent.com/48377190/190070120-49512e86-423c-4af9-b4cc-13820a72d55b.png)
+
 
