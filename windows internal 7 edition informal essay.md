@@ -212,6 +212,10 @@ the chunks in this illustration called pages, and thier default size is 4KB
 
 Kernel mode VS. User mode
 
+to protect user applications from accessing and/or modifying critical OS data, Windows users two processor
+access modes: user and kernel mode
+
+Kernel mode refers to a mode of execution 
 
 
 
@@ -219,5 +223,4 @@ Kernel mode VS. User mode
 
 
 
-in some ways, the job object conpensates for the lack of a structured process tree in Windows
 
