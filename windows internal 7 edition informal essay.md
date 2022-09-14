@@ -114,10 +114,110 @@ with Process Explorer, we can get more information about process and thread than
  - the ability to kill an individual thread
  - ...
 
-viewing process details with Process Explorer
+viewing process details with [Process Explorer](https://github.com/wqreytuk/article/blob/main/ProcessExplorer.zip)
 
-first, we'll need to configure symbol path, just like using windbg,
+first, we'll need to configure symbol path, just like using windbg:
+
 ![image](https://user-images.githubusercontent.com/48377190/190069959-778248ac-b6f9-4da2-9f99-cb5a9a758378.png)
+
 ![image](https://user-images.githubusercontent.com/48377190/190070120-49512e86-423c-4af9-b4cc-13820a72d55b.png)
 
+just configure environment variable `_NT_SYMBOL_PATH` is enough, different tools will check this env variable to
+get symbol path automatically
+
+I did learn something about ProcExp
+
+
+Threads
+
+**A thread is an entity within a process that windows schedules for execution**
+
+here is the essential components of thread:
+ - The contents of a set of CPU registers representing the state of the processor
+ - Two stacks -- one for the thread to use while executing in kernel mode and one for user mode
+ - A private storage area called `thread-local storage (TLS)` for use by subsystems, run-tim libraries 
+   and DLLs
+ - Thread ID
+
+in addition, threads sometimes have their own security context, this is mainly used by multithread server
+apps that impersonate the security context of the clients that they serve
+
+the volatile registers, stacks and private storage area are called the thread's `context`
+
+`context` is differnet between different architecture that Windows runs on, so it is architecture-specific,
+we can access this architecture-specific information with **GetThreadContext** function
+
+thread execution switching is expensive because kernel scheduler is involved
+
+Windows has two mechanisms to reduce this cost:
+ - fibers
+ - user-mode scheduling (UMS)
+
+Fibers
+
+Fibers allow an app to schedule its own threads of execution rather than rely on the OS priority-based
+scheduling mechanism
+
+fibers are often called `lightweight threads`, they are invisible to the kernel because they are implemented
+in user mode in kernel32.dll
+
+ConvertThreadToFider function will be called firstly if you want to use fibers
+
+this function will convert the thread to a running fiber, after that, the newly converted fiber can 
+create additional fibers via CreateFiber function
+
+BUT using fiber is usually not a good idea, there are some issues in it, I'm not gonna talk about it here
+
+User-mode scheduling threads
+
+UMS threads are only available on 64-bit version of windows
+
+when two or more UMS threads need to perform work in user mode, they can periodically switch execution
+contexts (by yielding from one thread to another) in user mode rather than involving the scheduler
+
+from the kernel's perspective, the same kernel thread is still running and nothing has changed
+
+A process and its resources:
+
+![image](https://user-images.githubusercontent.com/48377190/190092691-957fe188-3be8-479c-a1a0-8741809f9910.png)
+
+Jobs
+
+windows provides an extension to the process model called `job`
+
+A job object's main function. is to allow the **management and manipulation of groups of process
+as a unit**
+
+in some ways, the job object conpensates for the lack of a structured process tree in Windows
+
+we can view job with ProcExp
+
+![image](https://user-images.githubusercontent.com/48377190/190098762-e843679b-5e64-42e1-ac5f-80c9c7300617.png)
+
+![image](https://user-images.githubusercontent.com/48377190/190098960-7f2628ab-0d4c-4fe5-a4d2-9a787adc11c8.png)
+
+Virtual Memory
+
+**Windows implements a virtual memory system based on a flat (linear) address space that provides each
+process with the illusion of having its own large, private address space**
+
+here is an illustration of the relationship between virtual memory and physical memory:
+
+![image](https://user-images.githubusercontent.com/48377190/190100309-bd43a00f-bfc5-45b7-b166-b8fc098a5e11.png)
+
+you see, the contiguous virtual memory space may be not contiguous in physical memory, and some of them
+are mapped to disk (paged out)
+
+the chunks in this illustration called pages, and thier default size is 4KB
+
+Kernel mode VS. User mode
+
+
+
+
+
+
+
+
+in some ways, the job object conpensates for the lack of a structured process tree in Windows
 
