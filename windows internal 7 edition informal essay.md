@@ -1,4 +1,6 @@
-[PDF](https://empyreal96.github.io/nt-info-depot/Windows-Internals-PDFs/Windows%20System%20Internals%207e%20Part%201.pdf)
+[part I](https://github.com/wqreytuk/article/blob/main/Windows%20System%20Internals%207e%20Part%201(1).pdf)
+
+[part II](https://github.com/wqreytuk/article/blob/main/Windows%20Internals%20Part%202%207Ed.pdf)
 
 
 you know, windows is written by C, and there is no conception like namespace,
