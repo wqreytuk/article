@@ -250,4 +250,14 @@ we can use Performance Monitor to verify this: https://youtu.be/Y1L5O3AwRzU
 
 Hypervisor
 
+Hypervisor is onlt a concept, Hyper-V/Vmware/VirtualBox. all of them are hypervisor
 
+due to its highly privileged nature, and because it has access even greater than the kernel itself, a hypervisor has a distinct advantage that goes beyond merely running mutiple guest instances of other operating systems: It can protect and monitor a single host instance to offer assurances and guarantees beyond what the kernel provides
+
+Win10 now leverages the Hyper-V hypervisor to provide a new set of services known as a `virtualization-based security (VBS)`
+
+ - Device Guard
+ - Hyper Guard
+ - Credential Guard
+ - Application Guard
+ - Host Guardian and Shielded Fabric
