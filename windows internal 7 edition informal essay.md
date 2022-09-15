@@ -1,6 +1,6 @@
-[part I](https://github.com/wqreytuk/article/blob/main/Windows%20System%20Internals%207e%20Part%201(1).pdf)
+[original book pdf version -- part I](https://github.com/wqreytuk/article/blob/main/Windows%20System%20Internals%207e%20Part%201(1).pdf)
 
-[part II](https://github.com/wqreytuk/article/blob/main/Windows%20Internals%20Part%202%207Ed.pdf)
+[original book pdf version -- part II](https://github.com/wqreytuk/article/blob/main/Windows%20Internals%20Part%202%207Ed.pdf)
 
 
 you know, windows is written by C, and there is no conception like namespace,
@@ -333,4 +333,37 @@ the debugging tools can also be used to attach to a user-mode process and to exa
  - Invasive, when you attach to a running process with this option, debugger use the DebugActiveProcess Windows function to establish a connection between the debugger and the debuggee, this permits you to examin and/or change process memory, set breakpoints, and perform other debugging functions, Windows allows you to stop debugging without killing the target process as long as the debugger is detached, not killed
  - Noninvasive, with this option, the debugger simply opens the process with the OpenProcess fucntion, it does not attach to the process as a debugger, this allows you to examine and/or change memory in the target process, but you cannot set breakpoints, this also means it's possible to attach noninvasively even if another debugger is attached invasively
 
+Chapter 2. System architecture
 
+Requirements and design goals
+
+the following **requirements** drove the specification of Windows NT back in 1989:
+ - Provide a true 32-bit, [preemptive](https://en.wikipedia.org/wiki/Reentrancy_(computing)), [reentrant](https://en.wikipedia.org/wiki/Reentrancy_(computing)), virtual memory OS
+ - Run on multiple hardware architectures and platforms
+ - Run and scale well on [symmetric multiprocessing systems](https://zh.wikipedia.org/zh-cn/对称多处理)
+ - Be a greate distributed computing platform, both as a network client and as a server
+ - Run most existing 16-bit MS-DOS and Microsoft Windows 3.1 applications
+ - Meet government requirements for [POSIX](https://en.wikipedia.org/wiki/POSIX) 1003.1 compliance
+ - Meet government and industry requirements for OS security
+ - Be easily adaptable to the global market by supporting Unicode
+
+
+To guide the thousands of decisions that had to be made to create a system that met these requirements, the Windows NT design team adopted the following **design goals** at the beginning of the project:
+ - Extensibility, the code must be written to comfortably grow and change as market requirements change
+ - Portability, the system must be able to run on multiple hardware architectures and must be able to move with relative ease to new ones as market demands dictate
+ - Reliability and robustness, the system should protect itself from both internal malfunction and external tampering. Applications should not be able to harm the OS or other applications
+ - Compatibility
+ - Performance
+
+
+Windows is not an object-oriented system in the strict sense. Most of the kernel-mode OS code is written in C for portability
+
+
+Architecture overview
+
+here is an diagramn for a simplified version of Windows architecture, it is very basic, and doesn't show everything
+
+![image](https://user-images.githubusercontent.com/48377190/190408941-c6e51f3d-36fe-4724-9c2a-bf8ea8f94d9c.png)
+
+
+there are two lines devide the OS to three parts, first line devide OS into User-Mode and Kernel-Mode, the second line devide it into kernel-mode and hypervisor context. Strictly speaking
