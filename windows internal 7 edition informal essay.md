@@ -262,4 +262,32 @@ Win10 now leverages the Hyper-V hypervisor to provide a new set of services know
  - Application Guard
  - Host Guardian and Shielded Fabric
 
+Hyper-V hypervisor makes OS more secure, unlike previous kernel-based security, it won't be affected by malicious signed driver code
 
+Virtual Trust Levels (VTLS), normal operating system and its components are in a less privileged mode (VTL 0), but these VBS technologies run at VTL 1 (a higher privilege), they can not be affected even by kernel mode code
+
+Firmware
+
+UEFI, TPM, these stuff will will make sure the right Windows component is loaded at the very beginning of the boot process
+
+Terminal Services and multiple sessions
+
+Windows client edition support only one session, but for server edition, two simultaneous session, and if appropriately licensed and configured as a terminal server, more than two remote sessions is supported, too
+
+Objects and handles
+
+**The most fundamental difference between an object and an ordianry data structure is that the internal structure of an object is opaque
+you must call an object service to get data out of or put data into an object
+you can not directly read or change data inside an object
+this difference separates the underlying implementation of the object from code that merely use it, a good technique that allows object implementations to be changed easily over time**
+
+
+not all data structures in the Windows OS are objects, only data that needs to be shared, protected, named, or made visible to user-mode programs (via system service) is placed in objects
+
+structures used by only one component of the OS to implement internal functions are not obejcts
+
+Security
+
+ - Discretionary access control, object's owner will decide who can access this object and who can not, now with Winserver2012 and Win8 come out, this form of discretionary control is improved by implementing attribute-based access control (Dynamic Access Control), a resource's access control list does not necessarily identify individual users and groups. Instead, it identifies required attributes or claims that grant access to a resource, such as "Clearance Level: Top Secret" or "Seniority: 10 Years". With the ability to populate such attributes automatically by parsing SQL databases and schemas through Active Directory, this significantly more elegant and flexible security model helps organizations avoid cumbersome manual group management and group hierarchies
+ - Privileged access control, consider this, an employee leaves a company, the administrator needs a way to gain access to files that might have been accessible only to this left employee. In this case, under Windows, the administrator can take ownership of the file so that they can manage its rights as necessary. This is a method of ensuring that someone can get to protected objects if the owner isn't available
+ - Mandatory intergrity control
