@@ -19,6 +19,7 @@ DDE is limited enherently, so COM is created to replace it, in fact, COM's origi
 name is OLE2
 
 here are two foundational principals:
+
  - client communicates with object through interface, the interface here represents
    well-defined contracts with a set of logically related methods grouped under the 
    virtual table dispatch machanism, this is also a common way for C++ compiles to implem-
@@ -27,17 +28,18 @@ here are two foundational principals:
    makes it possible to call these methods from many other languages, such as C, C++
    VB, .NET, Delphi, etc...
  - component implementation is loaded dynamically rather than being statically linked to client
- 
+
 you may often see the term `COM server`, it typically refers to a DLL -- Dynamic Linked Library
 or an EXE -- Executable where the COM classes are implemented
 
 I always see the term `Marshalling`, but I never know what does it mean, today I googled it:
+
  - In computer science, marshalling or marshaling (US spelling) 
    is the process of transforming the memory representation of an object into a data format 
    suitable for storage or transmission
    It is typically used when data must be moved between different parts of a computer program
    or from one program to another
-   
+
 in a word, marshalling is object transition
 
 Windows Runtime
@@ -60,20 +62,23 @@ The .NET Framework
 
 here is a table for different OS build's default .NET version
 
-![image](https://user-images.githubusercontent.com/48377190/190040521-2267c37a-86f3-4232-86c7-bb8968dd6ce9.png)
+![image](https://img-blog.csdnimg.cn/548d13f7a6b94964b98e483d94f8c3e7.png)
 
 there are two major components:
+
  - CLR -- Common Language Runtime, this is the run-time engine for .NET and a Just In Time -- JIT compiler is included
    in, this compiler will translate Common Intermediate Language -- CIL instructions to the underlying hardware CPU
    machine language, and a grabage collector is included, too
    CLR is implemented as a COM in-process server (DLL) and it uses various facilities provided by the Windows API
+
  - FCL -- .NET Framework Class Library, this is a large collection of types that implement functionality typically nedded
    by client and server applications, such as user interface services, networking, database access and much more
+
    
-   
+
 here is an illustration for the relationship between the .NET framework and the OS:
 
-![image](https://user-images.githubusercontent.com/48377190/190041803-0ddfb8cc-b5bf-4366-8ce0-2b6a8aedf12f.png)
+![image](https://img-blog.csdnimg.cn/14370faac6964a54a7b38a1ae4ac5321.png)
 
 Services, functions and routines
 
@@ -88,6 +93,7 @@ here is the essential difference between program and process, former is a static
 and latter is a container for a set of resources used when executing the instance of the program
 
 at the highest level of abstraction, a windows process comprises the following:
+
  - A private virtual address space
  - An executable program
  - A list of open handles
@@ -120,9 +126,9 @@ viewing process details with [Process Explorer](https://github.com/wqreytuk/arti
 
 first, we'll need to configure symbol path, just like using windbg:
 
-![image](https://user-images.githubusercontent.com/48377190/190069959-778248ac-b6f9-4da2-9f99-cb5a9a758378.png)
+![image](https://img-blog.csdnimg.cn/81c380ca43ae451eb0039e4ac0e44858.png)
 
-![image](https://user-images.githubusercontent.com/48377190/190070120-49512e86-423c-4af9-b4cc-13820a72d55b.png)
+![image](https://img-blog.csdnimg.cn/c85ec798465d4c1aa18e434fdd46681b.png)
 
 just configure environment variable `_NT_SYMBOL_PATH` is enough, different tools will check this env variable to
 get symbol path automatically
@@ -135,6 +141,7 @@ Threads
 **A thread is an entity within a process that windows schedules for execution**
 
 here is the essential components of thread:
+
  - The contents of a set of CPU registers representing the state of the processor
  - Two stacks -- one for the thread to use while executing in kernel mode and one for user mode
  - A private storage area called `thread-local storage (TLS)` for use by subsystems, run-tim libraries 
@@ -152,6 +159,7 @@ we can access this architecture-specific information with **GetThreadContext** f
 thread execution switching is expensive because kernel scheduler is involved
 
 Windows has two mechanisms to reduce this cost:
+
  - fibers
  - user-mode scheduling (UMS)
 
@@ -181,7 +189,7 @@ from the kernel's perspective, the same kernel thread is still running and nothi
 
 A process and its resources:
 
-![image](https://user-images.githubusercontent.com/48377190/190092691-957fe188-3be8-479c-a1a0-8741809f9910.png)
+![image](https://img-blog.csdnimg.cn/1c1ffc0f66844f9db6f4d8d441780ddd.png)
 
 Jobs
 
@@ -194,9 +202,9 @@ in some ways, the job object conpensates for the lack of a structured process tr
 
 we can view job with ProcExp
 
-![image](https://user-images.githubusercontent.com/48377190/190098762-e843679b-5e64-42e1-ac5f-80c9c7300617.png)
+![image](https://img-blog.csdnimg.cn/b0ed56db70924d6f83e01c7145acdebe.png)
 
-![image](https://user-images.githubusercontent.com/48377190/190098960-7f2628ab-0d4c-4fe5-a4d2-9a787adc11c8.png)
+![image](https://img-blog.csdnimg.cn/0f2383cbc08c4843ae14603e5d89bc23.png)
 
 Virtual Memory
 
@@ -205,7 +213,7 @@ process with the illusion of having its own large, private address space**
 
 here is an illustration of the relationship between virtual memory and physical memory:
 
-![image](https://user-images.githubusercontent.com/48377190/190100309-bd43a00f-bfc5-45b7-b166-b8fc098a5e11.png)
+![image](https://img-blog.csdnimg.cn/57b37411d238414e99f7ae5f9d2798ef.png)
 
 you see, the contiguous virtual memory space may be not contiguous in physical memory, and some of them
 are mapped to disk (paged out)
@@ -330,6 +338,7 @@ symbols for kernel debugging
 User-mode debugging
 
 the debugging tools can also be used to attach to a user-mode process and to examine and/or change process memory. There are two options when attaching to a process:
+
  - Invasive, when you attach to a running process with this option, debugger use the DebugActiveProcess Windows function to establish a connection between the debugger and the debuggee, this permits you to examin and/or change process memory, set breakpoints, and perform other debugging functions, Windows allows you to stop debugging without killing the target process as long as the debugger is detached, not killed
  - Noninvasive, with this option, the debugger simply opens the process with the OpenProcess fucntion, it does not attach to the process as a debugger, this allows you to examine and/or change memory in the target process, but you cannot set breakpoints, this also means it's possible to attach noninvasively even if another debugger is attached invasively
 
@@ -338,6 +347,7 @@ Chapter 2. System architecture
 Requirements and design goals
 
 the following **requirements** drove the specification of Windows NT back in 1989:
+
  - Provide a true 32-bit, [preemptive](https://en.wikipedia.org/wiki/Reentrancy_(computing)), [reentrant](https://en.wikipedia.org/wiki/Reentrancy_(computing)), virtual memory OS
  - Run on multiple hardware architectures and platforms
  - Run and scale well on [symmetric multiprocessing systems](https://zh.wikipedia.org/zh-cn/对称多处理)
@@ -349,6 +359,7 @@ the following **requirements** drove the specification of Windows NT back in 198
 
 
 To guide the thousands of decisions that had to be made to create a system that met these requirements, the Windows NT design team adopted the following **design goals** at the beginning of the project:
+
  - Extensibility, the code must be written to comfortably grow and change as market requirements change
  - Portability, the system must be able to run on multiple hardware architectures and must be able to move with relative ease to new ones as market demands dictate
  - Reliability and robustness, the system should protect itself from both internal malfunction and external tampering. Applications should not be able to harm the OS or other applications
@@ -363,7 +374,54 @@ Architecture overview
 
 here is an diagramn for a simplified version of Windows architecture, it is very basic, and doesn't show everything
 
-![image](https://user-images.githubusercontent.com/48377190/190408941-c6e51f3d-36fe-4724-9c2a-bf8ea8f94d9c.png)
+![image](https://img-blog.csdnimg.cn/4f1aa6bda3db43c4b7fa86c38d6b437d.png)
 
 
-there are two lines devide the OS to three parts, first line devide OS into User-Mode and Kernel-Mode, the second line devide it into kernel-mode and hypervisor context. Strictly speaking
+there are two lines divide the OS to three parts, first line divide OS into User-Mode and Kernel-Mode, the second line divide it into kernel-mode and hypervisor context. Strictly speaking, the hypervisor still runs with the same CPU privilege level (0) as the kernel, but because it uses specialized CPU instructions (VT-x on Intel, SVM on AMD), it can both isolate itself from the kernel while also monitoring it (and applications). For these reasons, you may often hear the term `ring -1` thrown around (which is inaccurate)
+
+there are four basic types of user-mode processes:
+
+ - User Processes
+ - Service process
+ - System processes
+ - environment subsystem server processes
+
+in the diagram above, Subsystem DLLs box is below the Service Processes and User Processes boxes. Under Windows, user applications don't call the native Windows OS service directly. Rather, they go through one or more `subsystem dynamic-link libraries (DLLs)`. The role of subsystem DLLs is to translate a documented function into the appropriate internal (and generally undocumented) native system service calls implemented mostly in Ntdll.dll. This translation might or might not involve sending a message to the environment subsystem process that is serving the user process.
+
+
+
+The kernel-mode components of Windows include the following:
+
+- **Executive**, the Windows executive contains the base OS services, such as memory management, process and thread management, security, I/O, networking, and inter-process communication
+- **The Windows kernel**, this consists of low-level OS functions, such as thread scheduling, interrupt and exception dispatching, and multiprocessor synchronization. It also provides a set of routines and basic objects that the rest of the executive uses to implement higher-level constructs
+- **Device drivers**, this includes both hardware device drivers, which translate user I/O function calls into specific hardware device I/O requests, and non-hardware device drivers, such as file system and network drivers
+- **The Hardware Abstraction Layer (HAL)**, this is a layer of code that isolates the kernel, the device drivers, and the rest of the Windows executive fro platform-specific hardware differences (such as differences between motherboards)
+- **The windowing and graphics system**, this implements the graphical user interface (GUI) functions (better known as the Windows USER and GDI functions), such as dealing with windows, user interface controls, and drawing
+- **The hypervisor layer**, this is composed of a single component: the hypervisor itself. There are no drivers or other modules in this environment. That being said, the hypervisor is itself composed of multiple internal layers and services, such as its own memory manager, virtual processor scheduler, interrupt and timer management, synchronization routines, partitions (virtual machine instances) management and inter-partition communication (IPC), and more
+
+
+
+here is the file names of the core Windows OS components
+
+| File  Name                                         | Components                                                   |
+| -------------------------------------------------- | ------------------------------------------------------------ |
+| Ntoskrnl,exe                                       | Executive and kernel                                         |
+| hal.dll                                            | HAL                                                          |
+| Win32k.sys                                         | Kernel mode part of the Windows subsystem (GUI)              |
+| Hvix64.exe (Intel), Hvax64.exe (AMD)               | Hypervisor                                                   |
+| .sys files in  %SystemRoot%\System32\Drivers       | Core drivers files, such as Direct X, Volume Management TCP/IP, TPM and  ACPI support |
+| Ntdll.dll                                          | Internal support functions and system service dispatch stubs to executive  functions |
+| Kernel32.dll, Advapi32.dll, User32.dll,  Gdi32.dll | Core Windows subsystem DLLs                                  |
+
+
+
+before we dig into details of these system components, though, let's examine some basics about the Windows kernel design, starting with how Windows achieves portability across multiple hardware architectures
+
+
+
+Portability
+
+Windows achieves portability across hardware architectures and platforms in two primary ways:
+
+- **By using a layered design**, low-level portions of the system that are processor-architecture-specific or platform-specific isolated into separate modules so that upper layers of the system can be shielded from the differences between architectures and among hardware platforms. The two key components that provide OS portability are the kernel (contained in Ntoskrnl.exe) and the HAL (contained in HAL.dll)
+- **By using C**
