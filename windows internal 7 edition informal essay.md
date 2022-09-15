@@ -290,4 +290,45 @@ Security
 
  - Discretionary access control, object's owner will decide who can access this object and who can not, now with Winserver2012 and Win8 come out, this form of discretionary control is improved by implementing attribute-based access control (Dynamic Access Control), a resource's access control list does not necessarily identify individual users and groups. Instead, it identifies required attributes or claims that grant access to a resource, such as "Clearance Level: Top Secret" or "Seniority: 10 Years". With the ability to populate such attributes automatically by parsing SQL databases and schemas through Active Directory, this significantly more elegant and flexible security model helps organizations avoid cumbersome manual group management and group hierarchies
  - Privileged access control, consider this, an employee leaves a company, the administrator needs a way to gain access to files that might have been accessible only to this left employee. In this case, under Windows, the administrator can take ownership of the file so that they can manage its rights as necessary. This is a method of ensuring that someone can get to protected objects if the owner isn't available
- - Mandatory intergrity control
+ - Mandatory integrity control, tthis is required when an additional level of security control is needed to protect objects that are being accessed from within the same user account, something about UAC, we discuss this later
+
+
+from Win8, a sandbox called an `AppContainer` is used to host Windows Apps, which provides isolation with relation to other AppContainers and non-Windows Apps processes
+
+
+Registry
+
+you can't talk much about Windows internals without referring to the registry because it's the system database, a hell of lot of information is stored in it
+
+
+Unicode 
+
+UNICODE <==> UTF-16LE.  16bit-wide
+
+EXPERIMENT: Viewing exported functions
+
+it's boring, just use [dependecywalker](https://github.com/wqreytuk/article/blob/main/dependencywalker.tar.gz)
+
+Digging into Windows internals
+
+Performance Monitor and Resource Monitor
+
+Kernel debugging
+
+symbols for kernel debugging
+
+**there are four debuggers included in the tools: cdb, btsd, kd and WinDbg, all of them are based on a single debugging engine implemented in DbgEng.dll**
+
+ - cdb and ntsd are user-mode debuggers based on a console user interface
+ - kd is a kernel-mode debugger based on a console user interface
+ - WinDbg can be used as a user-mode or kernel-mode debugger, but not both at the same time. It provides a GUI for the user
+ - The user-mode debuggers (cdb, ntsd, and WinDbg, when used as such) are essentially equivalent. Usage of one or the other is a matter of preference
+ - The kernel-mode debuggers (kd and WinDbg, when used as such) are equivalent as well
+
+User-mode debugging
+
+the debugging tools can also be used to attach to a user-mode process and to examine and/or change process memory. There are two options when attaching to a process:
+ - Invasive, when you attach to a running process with this option, debugger use the DebugActiveProcess Windows function to establish a connection between the debugger and the debuggee, this permits you to examin and/or change process memory, set breakpoints, and perform other debugging functions, Windows allows you to stop debugging without killing the target process as long as the debugger is detached, not killed
+ - Noninvasive, with this option, the debugger simply opens the process with the OpenProcess fucntion, it does not attach to the process as a debugger, this allows you to examine and/or change memory in the target process, but you cannot set breakpoints, this also means it's possible to attach noninvasively even if another debugger is attached invasively
+
+
