@@ -1,4 +1,4 @@
-https://empyreal96.github.io/nt-info-depot/Windows-Internals-PDFs/Windows%20System%20Internals%207e%20Part%201.pdf
+[PDF](https://empyreal96.github.io/nt-info-depot/Windows-Internals-PDFs/Windows%20System%20Internals%207e%20Part%201.pdf)
 
 
 you know, windows is written by C, and there is no conception like namespace,
@@ -261,3 +261,5 @@ Win10 now leverages the Hyper-V hypervisor to provide a new set of services know
  - Credential Guard
  - Application Guard
  - Host Guardian and Shielded Fabric
+
+
