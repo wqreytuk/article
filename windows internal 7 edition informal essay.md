@@ -236,8 +236,18 @@ pages in system space can be accessed only from kernel mode, whereas all pages i
 read-only pages (such as those that contains static data) are not writable from any mode
 
 
+additionally, on processors that support no-execute memory protection, Windows marks pages containing data as non-executable, thus preventing inadvertent or malicious code execution in data areas ( if Data Execution Prevenntion [DEP] is enabled)
 
+there is no protection in kernel mode, so third-party device driver must be signed to make sure it won't make threats to the stability of OS
 
+**driver-signing mechanism is introduced in Windows 2000, a warning will pop up if an unsigned plug-and-play driver is added, and on x64 ARM Win8.1, the kernel-mode code-signing (KMCS) policy dictates that all device (not only plug-and-play) drivers must be signed with a cryptographic key assigned by one of the major code certifcation authorities**
 
+it's normal for a user thread to spend part of its time executing in user mode and part in kernel mode, because system call will switch it to kernel mode. unless there is no system call called (not likely)
+
+**in fact, because the bulk of the graphics and windosing system also runs in kernel mode, graphics-intensive app spend more of their time in kernel mode than in user mode**
+
+we can use Performance Monitor to verify this: https://youtu.be/Y1L5O3AwRzU
+
+Hypervisor
 
 
