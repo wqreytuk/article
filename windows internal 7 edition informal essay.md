@@ -425,3 +425,42 @@ Windows achieves portability across hardware architectures and platforms in two 
 
 - **By using a layered design**, low-level portions of the system that are processor-architecture-specific or platform-specific isolated into separate modules so that upper layers of the system can be shielded from the differences between architectures and among hardware platforms. The two key components that provide OS portability are the kernel (contained in Ntoskrnl.exe) and the HAL (contained in HAL.dll)
 - **By using C**
+
+Symmetric multiprocessing
+
+
+
+`Multitasking` is the OS technique for sharing a single processor among multiple threads of execution
+
+as there is a Symmetric multiprocessing, there is a `asymmetric multiprocessing` (ASMP), in which the OS typically selects one processor to execute OS kernel code while other processors run only user code. Here is their difference illustration:
+
+![image-20220916103637992](https://img-blog.csdnimg.cn/e2814d26f9994908861abf57c2def7b7.png)  
+
+
+
+SMT -- simultaneous multi-thread was first introduced to Windows system by adding support for Intel's Hyper-Threading Technology, which provides two logical processors for each physical core. Each logical processor has its own CPU state, but the execution engine and onboard cache are shared. This permits one logical CPU to make progress while the other logical CPU is stalled (such as after a cache miss or branch misprediction). Confusingly, the marketing literature for both companies (Intel and AMD) refers to these additional cores as `threads`, so you'll often see claims such as "four cores, eight threads". This indicates that up to eight threads can be scheduled, hence, the existence of eight logical processors
+
+
+
+NUMA -- non-uniform memory access, processors are grouped in smaller units called `nodes`. Each node has its own processors and memory and is connected to the larger system through a cache-coherent interconnect bus
+
+The idea of NUMA is that node-local memory is faster to reference than memory attached to other nodes. The system attempts to improve performance by scheduling threads on processors that are in the same node as the memory being used. It attempts to satisfy memory-allocation requests from within the node, but it will allocate memory from other nodes if necessary
+
+ARM version of Windows also support a technology known as `heterogeneous multi-processing` whose implementation on such processors is called `big.LITTLE`. This type of SMP-based design differs from traditional ones in that not all processor cores are identical in their capabilities, yet unlike pure heterogeneous multi-processing, they are still able to execute the same instructions. The differences, then, comes from the clock speed and respective full load/idle power draws, allowing for a collection of slower cores to be paired with faster ones.
+
+
+
+Think of sending an e-mail on an older dual-core 1 GHz system connected to a modern Internet connection. It's unlikely this will be any slower than on an eight-core 3.6 GHz machine because bottlenecks are mostly caused by human input typing speed and network bandwidth, not raw processing power. Yet even in its deepest power-saving mode, such a modern system is likely to use significantly more power than the legacy system. Even if it could regulate itself down to 1GHz, the legacy system has probably set itself to 200 MHz, for example
+
+By being able to pair such legacy mobile processors with top-of-the-line ones, ARM-based platforms paired with a compatible OS kernel scheduler can maximize processing power when needed (by turning on all cores), strike a balance (by having certain big cores online and other little ones for other tasks), or run in extremely low power modes (by having only a single little core online -- enough for SMS and push e-mail). By supporting what are called `heterogeneous scheduling policies`, Windows 10 allows threads to pick and choose between a policy that satisfies their need, and will interact with the scheduler and power manager to best support it.
+
+So ARM-based system will save more power
+
+
+
+Differences between client and server versions
+
+
+
+
+
