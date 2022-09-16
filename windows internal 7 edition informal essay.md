@@ -4,6 +4,7 @@
 
 [Sysinternals Suite](https://github.com/wqreytuk/article/blob/main/sysinternalsuite.tar.gz)
 
+[Slpolicy.exe]()
 you know, windows is written by C, and there is no conception like namespace,
 so the function name is just a complete mess
 
