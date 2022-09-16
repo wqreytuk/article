@@ -2,6 +2,7 @@
 
 [original book pdf version -- part II](https://github.com/wqreytuk/article/blob/main/Windows%20Internals%20Part%202%207Ed.pdf)
 
+[Sysinternals Suite](https://github.com/wqreytuk/article/blob/main/sysinternalsuite.tar.gz)
 
 you know, windows is written by C, and there is no conception like namespace,
 so the function name is just a complete mess
