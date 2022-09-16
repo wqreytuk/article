@@ -4,7 +4,8 @@
 
 [Sysinternals Suite](https://github.com/wqreytuk/article/blob/main/sysinternalsuite.tar.gz)
 
-[Slpolicy.exe]()
+[Slpolicy.exe](https://github.com/wqreytuk/article/tree/main/SlPolicy)
+
 you know, windows is written by C, and there is no conception like namespace,
 so the function name is just a complete mess
 
@@ -457,12 +458,5 @@ Think of sending an e-mail on an older dual-core 1 GHz system connected to a mod
 By being able to pair such legacy mobile processors with top-of-the-line ones, ARM-based platforms paired with a compatible OS kernel scheduler can maximize processing power when needed (by turning on all cores), strike a balance (by having certain big cores online and other little ones for other tasks), or run in extremely low power modes (by having only a single little core online -- enough for SMS and push e-mail). By supporting what are called `heterogeneous scheduling policies`, Windows 10 allows threads to pick and choose between a policy that satisfies their need, and will interact with the scheduler and power manager to best support it.
 
 So ARM-based system will save more power
-
-
-
-Differences between client and server versions
-
-
-
 
 
