@@ -459,4 +459,44 @@ By being able to pair such legacy mobile processors with top-of-the-line ones, A
 
 So ARM-based system will save more power
 
+EXPERIMENT: Determining features enabled by licensing policy
+
+
+
+As mentioned, Windows supports more than 100 different features that can be enabled through the software licensing mechanism
+
+
+
+Policy settings are organized by a `facility`, which represents the owner module for which the policy applies. You can display a list of all facilities known to the tool by running SlPolicy.exe with the -f switch:
+
+![image-20220916134418160](https://img-blog.csdnimg.cn/a761222f3e7946b89618e2edab7917df.png)
+
+you can then add the name of any facility after the switch to display the policy for that facility. For example, to look at the limitations on CPUs and available memory, user the Kernel facility:
+
+Windows 10 Education
+
+![image-20220916134713113](https://img-blog.csdnimg.cn/66255e6b531e4b28a356c0373bb905e2.png)
+
+and here is what I got in server 2012 R2 Datacenter:
+
+![image-20220916140946948](https://img-blog.csdnimg.cn/0a9631892cc7457bbe26f7f44c88250e.png)
+
+you can see the deference of the value between them are huge
+
+Checked build
+
+for device driver developers
+
+EXPERIMENT: Determining if you are running the checked build version Windows
+
+
+
+just run this command in powershell:
+
+```powershell
+Get-WmiObject win32_operatingsystem | select debug
+```
+
+`False` means your OS is not running the checked build
+
 
