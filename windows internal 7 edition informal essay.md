@@ -499,4 +499,13 @@ Get-WmiObject win32_operatingsystem | select debug
 
 `False` means your OS is not running the checked build
 
+Virtualization-based security atchitecture overview
+
+if an unwanted piece of kernel-mode code makes it into the system (because of some yet-unpatched kernel or driver vulnerability or because the user was tricked into installing a malicious or vulnerable driver), the system is essentially compromised because all kernel-mode code has complete access to the entire system
+
+here is an illustration for Windows10 and Server2016:
+
+![image](https://user-images.githubusercontent.com/48377190/190905827-c037d08a-76ed-4aa6-83ae-721b71374c26.png)
+
+with VBS enabled, a VTL1 is presented, which contains its own secure kernel running in the privileged processor mode (that is, ring 0 on x86/x64). Similarly, a run-time user environment mode, called the Isolated User Mode (IUM), now exists, which runs in unprivileged mode (that is, ring 3)
 
