@@ -554,3 +554,101 @@ As mentioned, user applications don't call Windows system services directly. Ins
 
 
 EXPERIMENT: Viewing the image subsystem type
+
+When an application calls a function in a subsystem DLL, one of three things can occur:
+
+- The function is entirely implemented in user mode inside the subsystem DLL
+- The function requires one or more calls to the Windows executive
+- The function requires some work to be done in the environment subsystem process
+
+subsystem startup
+
+
+
+subsystems are started by the Session Manager (Smss.exe) process. The subsystem startup information is stored under the registry key:
+
+```
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\SubSystems
+```
+
+![image-20220919115151053](https://img-blog.csdnimg.cn/a847406df79841d1a9fd6eaadf71402f.png)
+
+
+
+The Required value lists the subsystems that load when the system boots: Debug and Windows
+
+
+
+from a practical perspective, having each subsystem implement all the code to handle windowing and display I/O would result in a large amount of duplication of system functions that, ultimately, would negatively affect both system size and performance
+
+
+
+the Windows designer decided to locate there basic function to Windows subsystem and have all the other subsystems call on the Windows subsystem to perform display I/O.
+
+
+
+As a result of this design decision, the Windows subsystem is a required component for any Windows system, even on server systems with no interactive users logged in. Because of this, the process is marked as a critical process (which means if it exits for any reason, the system crashes)
+
+The Windows subsystem consists of the following major components:
+
+- for each session, an instance of the environment subsystem process (csrss.exe) loads four DLLs (basesrv.dll, winsrv.dll, sxssrv.dll, and csrsrv.dll) that contain support for the following:
+  - Various housekeeping tasks related to creating and deleting processes and threads
+  - Shutting down Windows applications (through the ExitWindowsEx API)
+  - Containing .ini file to registry location mappings for backward compatibility
+  - Sending certain kernel notification messages (such as those from the Plug-and-Play manager) to Windows applications as Windows message (WM_DEVICECHANGE)
+  - Portions of the support for 16-bit virtual DOS machine (VDM) processes (32-bit Windows only)
+  - Side-by-Side (SxS)/Fusion and manifest cache support
+  - Several natural language support functions, to provide caching
+- A kernel-mode device driver (win32k.sys) that contains the following:
+  - windows manager
+  - Graphic Device Interface (GDI), which is a library of functions for graphics output devices and includes functions for line, text, and figure drawing and for graphics manipulation
+  - Wrappers for DirectX support that is implemented in another kernel driver （dxgkrnl.sys)
+- The console host process (conhost.exe), which provides support for console (character cell) applications
+- The Desktop Window Manager (dwm.exe), which allows for compositing visible window rendering into a single surface through the CDD and DirectX
+- Subsystem DLLs (such as kernel32.dll, advapi32.dll, user32.dll, and gdi32.dll) that translate documented Windows API functions into the appropriate and undocumented (for user-mode) kernel-mode system service calls in ntoskrnl.exe and win32k.sys
+- Graphic device drivers for hardware-dependent graphics display drivers, printer drivers, and video miniport drivers
+
+
+
+
+
+windows 10 and win32k.sys
+
+
+
+console window host
+
+
+
+​	in the original Windows subsystem design, the subsystem process (csrss.exe) was responsible for managing console windows and each console application (such as cmd.exe, the command prompt) communicated with csrss.exe. Starting with Windows 7, a separate process is used for each console window on the system: the console window host (conhost.exe). (A single console window can be shared by multiple console applications, such as when you launch a command prompt from the command prompt. By default the second command prompt shares the console window of the first)
+
+![image-20220919160035908](https://img-blog.csdnimg.cn/0f6b8b4cc8fe4d0bb374532409953e0c.png)
+
+
+
+but if you execute `start cmd` in current command prompt, a new conhost.exe process will be created
+
+
+
+![image-20220919160206999](https://img-blog.csdnimg.cn/1c8a4ab4e63c4229ad05091dc73e0d50.png)
+
+there is a little bit difference between Win7 and Win8 or later. In Win7, the conhost.exe is is spawned from the csrss.exe, but in Win8 or later, conhost.exe is spawned from cmd.exe:
+
+Win7:
+
+![image-20220919161103970](https://img-blog.csdnimg.cn/111e987be171498ab06268c649a0aeea.png)
+
+Win8 or later:
+
+![image-20220919161141913](https://img-blog.csdnimg.cn/a99968b5cad341da8a81b1e3853f24a4.png)
+
+the following process expolrer screen shows the handle conhost.exe holds open to the device object exposed by condrv.sys named `\Device\ConDrv`
+
+![image-20220919162246914](https://img-blog.csdnimg.cn/729b18c6c88f4ee6b3215df49d3334e1.png)
+
+The real workhorse of conhost.exe is a DLL it loads (`\Windows\System32\conhostV2.dll`) that includes the bulk of code that communicates with the console driver
+
+Other subsystems
+
+
+
