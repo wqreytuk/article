@@ -526,3 +526,31 @@ secure kernel is known as `proxy kernel`, because it forwards system calls to VL
 
 
 The secure kernel however, by both running at VTL 1 an being in kernel mode, does have complete access to VTL 0 memory and resources. It can use the hypervisor to limit the VTL 0 OS access to certain memory locations by leveraging CPU hardware support known as Second Level Address Translation (SLAT). SLAT is the basis of Credential Guard technology, which can store secrets in such locations. Similarly, the secure kernel can use SLAT technology to interdict and control execution of memory location, a key covenant of Device Guard
+
+Because the hypervisor is the first system conponent to be launched by the boot loader, it can program the SLAT and I/O MMU as it sees fit, defining the VTL 0 and 1 execution environments. Then, while in VTL 1, the boot loader runs again, loading the secure kernel, which can configure the system further to its needs. Only then is the VTL dropped, which will see the execution of the normal kernel, now living in its VTL 0 jail, unable to escape
+
+
+
+Key system components
+
+
+
+![image-20220919094121048](https://img-blog.csdnimg.cn/676b2ec11756465298f689eddefdef22.png)
+
+Environment subsystems and subsystem DLLs
+
+
+
+the role of an environment subsystem is to expose some subset of the base Windows executive system services to application programs.
+
+
+
+each executable image (.exe) is bound to one and only one subsystem. When an image is run, the process creation code examines the subsystem type code in the image header so that it can notify the proper subsystem of the new process. This type code is specified with the /SUBSYSTEM linker option of the Microsoft Visual Studio linker (or through the SubSystem entry in the Linker/System property page in the project's properties)
+
+
+
+As mentioned, user applications don't call Windows system services directly. Instead, they go through one or more subsystem DLLs. These libraries export the documented interface that the programs linked to that subsystem can call. For example, the Windows subsystem DLLs (such as kernel32.dll, advapi32.dll, user32.dll, and gdi32.dll) implement the Windows API functions. The SUA subsystem DLL (psxdll.dll) is used to implement the SUA API functions (on Windows version that supported POSIX)
+
+
+
+EXPERIMENT: Viewing the image subsystem type
