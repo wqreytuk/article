@@ -509,3 +509,20 @@ here is an illustration for Windows10 and Server2016:
 
 with VBS enabled, a VTL1 is presented, which contains its own secure kernel running in the privileged processor mode (that is, ring 0 on x86/x64). Similarly, a run-time user environment mode, called the Isolated User Mode (IUM), now exists, which runs in unprivileged mode (that is, ring 3)
 
+In this architecture, the secure kernel is its own separate binary, which is found under the name securekernel.exe 
+
+
+
+![image-20220919084544737](https://img-blog.csdnimg.cn/031919bd233c4c158e92910050f17cac.png)
+
+As for IUM, it's both an environment that restricts the allowed system calls that regular user-mode DLLs can make (thus limiting which of these DLLs can be loaded) and a framework that adds special secure system calls that can execute only under VTL1
+
+
+
+These additional system calls are exposed in a similar way as regular system calls: through an internal system library named `iumdll.dll` (the VTL1 version of `ntdll.dll`) and a Windows subsystem-facing library named `iumbase.dll` (the VTL1 version of `kernelbase.dll`)
+
+secure kernel is known as `proxy kernel`, because it forwards system calls to VLT0 kernel, it does not implement a full range of system capabilities. For VTL 1 user-mode applications, any kind of I/O, including file, network, and registry-base, is complete prohibited. And not a single driver is allowed to be communicated with
+
+
+
+The secure kernel however, by both running at VTL 1 an being in kernel mode, does have complete access to VTL 0 memory and resources. It can use the hypervisor to limit the VTL 0 OS access to certain memory locations by leveraging CPU hardware support known as Second Level Address Translation (SLAT). SLAT is the basis of Credential Guard technology, which can store secrets in such locations. Similarly, the secure kernel can use SLAT technology to interdict and control execution of memory location, a key covenant of Device Guard
