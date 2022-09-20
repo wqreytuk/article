@@ -650,5 +650,88 @@ The real workhorse of conhost.exe is a DLL it loads (`\Windows\System32\conhostV
 
 Other subsystems
 
+ntdll.dll
+
+
+
+ntdll.dll is special system support library primarily for the use of subsystem DLLs and antive applications. (Native in this context refers to images that are not tied to any particular subsystem.) It contains two types of functions:
+
+- System service dispatch stubs to Windows executive system services
+- Internal support functions used by subsystems, subsystem DLLs, and other native images
+
+
+
+the first group of functions provides the interface to the Windows executive system services that can be called from user mode. There are more than 450 such functions, such as NtCreateFile, NtSetEvent, and so on. As noted, most of the capabilities of these functions are accessible through the Windows API. (A number are not, however, and are for use only by specific OS-internal components)
+
+For each of these functions, ntdll.dll contains an entry point with the same name. The code inside the function contains the architecture-specific instruction that causes a transition into kernel mode to invoke the system service dispatcher. (This is explained in more detail later) After verifying some parametrs, this system service dispatcher calls the actual kernel-mode system service that contains the real code inside ntoskrnl.exe. The following experiment shows what these functions look like.
+
+
+
+EXPERIMENT: Viewing the system service dispatcher code
+
+
+
+
+
+Native images
+
+
+
+some images (executables) don't belong to any subsystem. In other words, they don't link against a set of subsystem DLLs, such as kernel32.dll  for the Windows subsystem. Instead, they link only to ntdll.dlll, which is the lowest common denominator that spans subsystems
+
+smss.exe (Session Manager) is the first user-mode process to be created, directly by the kernel
+
+so it cannot be dependent on the Windows subsystem because csrss.exe (the Windows subsystem process) has not started yet.
+
+
+
+In fact, smss.exe is responsible for launching csrss.exe. Another example is the Autochk utility that sometimes runs at system startup to check disks. Because it runs relatively early in the boot process (launched by smss.exe, in fact), it cannot depend on any subsystem.
+
+
+
+Here is the import table for smss.exe, only a ntdll.dll:
+
+![image-20220920142954776](https://img-blog.csdnimg.cn/6f26c51e35074d57a3db7d160aaa2c6e.png)
+
+and the subsystem field is `driver`, in the book, it is `native`, according to the official doc, they are actually the same thing
+
+![image-20220920143131748](https://img-blog.csdnimg.cn/62db50ddd41047659ec61ba129a94ca0.png)
+
+
+
+Executive
+
+The Windows executive is the upper layer of ntoskrnl.exe. (The kernel is the lower layer.) The executive includes the following types of functions:
+
+- **Functions that are exported and callable from user mode**, these functions are called `system services` and are exported via ntdll.dll (such as NtCreateFile from the previous experiment). Most of the services are accessible through the Windows API or the APIs of another environment subsystem. A few services, however, aren't available through any documented subsystem function. (Examples include ALPC and various query functions such as NtQueryInformationProcess, specialized functions such as NtCreatePagingFile, and so on.)
+- **Device driver functions that are called through the DeviceIoControl function**, this provides a general interface from user mode to kernel mode to call functions in device drivers that are not associated with a read or write. The driver used fro Process Explorer and Process Monitor from Sysinternals are good examples of that as is the console driver (condrv.sys) mentioned earlier
+- **Functions that can be called only from kernel mode that are exported and documented in the WDK**, these include various support routines, such as the I/O manager (start with Io), general executive functions (Ex) and more, needed for device driver developers
+- **Functions that are exported and can be called from kernel mode but are not documented in the WDK**, these include the function called by the boot video driver, which start with Inbv
+- **Functions that are defined as global symbols but are not exported**, these include internal support functions called within ntoskrnl.dll, such as those that start with Iop (internal I/O manager support functions) or Mi (internal memory management support functions).
+- **Functions that are internal to a module that are not defined as global symbols**. these functions are used exclusively by the executive and kernel
+
+Kernel
+
+The kernel consists of a set of functions in ntoskrnl.exe that provides fundamental mechanisms.
+
+
+Creating a process
+
+The Windows API provides serveral functions for creating processes. The simplest is CreateProcess, which attempts to create a process with the same access token as the creating process.
+
+
+
+If a different token is required, CreateProcessAsUser can be usedm which accepts an extra argument (the first) -- a handle to a token object that was already somehow obtained (for example, by calling the LogonUser function).
+
+
+
+Examing the CSR_PROCESS
+
+
+
+csrss processes are protected (see later in this chapter for more on protected processes), so it's not possible to attach a user mode debugger to a csrss process (not even with elevated privileges or non-invasive). Instead, we'll use the kernel debugger 
+
+
+
 
 
