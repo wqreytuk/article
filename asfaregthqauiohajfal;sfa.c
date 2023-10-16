@@ -14,7 +14,6 @@ NTSTATUS DriverEntry(
 	(RegistryPath);
 	DriverObject->DriverUnload = SampleUnload;
 	KdPrint(("Sample driver initialized successfully\n"));
-
 	g_RegistryPath.Buffer = (WCHAR*)ExAllocatePoolWithTag(PagedPool,RegistryPath->Length, DRIVER_TAG);
 	if (nullptr == g_RegistryPath.Buffer) {
 		KdPrint(("Failed to allocate memory\n"));
@@ -31,5 +30,7 @@ NTSTATUS DriverEntry(
 
 void SampleUnload(_In_ PDRIVER_OBJECT DriverObject) {
 	(DriverObject);
+
+	ExFreePool(g_RegistryPath.Buffer);
 	KdPrint(("Sample driver Unload called\n"));
 }
