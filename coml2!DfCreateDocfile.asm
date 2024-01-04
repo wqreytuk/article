@@ -400,7 +400,7 @@ eax=0121c150 ebx=00001012 ecx=01200000 edx=01200000 esi=00000000 edi=0122f6e0
 eip=76984332 esp=010ff7b4 ebp=010ff7dc iopl=0         nv up ei pl nz na pe nc
 cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000206
 coml2!DfCreateDocfile+0xed:
-76984332 8b5510          mov     edx,dword ptr [ebp+10h] ss:0023:010ff7ec=00000000
+76984332 8b5510          mov     edx,dword ptr [ebp+10h] ss:0023:010ff7ec=00000000    // ebp+0x10就是a5  即0
 eax=0121c150 ebx=00001012 ecx=01200000 edx=00000000 esi=00000000 edi=0122f6e0
 eip=76984335 esp=010ff7b4 ebp=010ff7dc iopl=0         nv up ei pl nz na pe nc
 cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000206
@@ -415,7 +415,7 @@ eax=010ff7c8 ebx=00001012 ecx=01200000 edx=00000000 esi=00000000 edi=0122f6e0
 eip=76984339 esp=010ff7b0 ebp=010ff7dc iopl=0         nv up ei pl nz na pe nc
 cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000206
 coml2!DfCreateDocfile+0xf4:
-76984339 ff7508          push    dword ptr [ebp+8]    ss:0023:010ff7e4=00000000
+76984339 ff7508          push    dword ptr [ebp+8]    ss:0023:010ff7e4=00000000	// 由于coml2!DfCreateDocfile是fastcall，前两个参数在寄存器里，因此ebp+8取出的是第一个栈参数，即coml2!DfCreateDocfile的a3  就是0
 eax=010ff7c8 ebx=00001012 ecx=01200000 edx=00000000 esi=00000000 edi=0122f6e0
 eip=7698433c esp=010ff7ac ebp=010ff7dc iopl=0         nv up ei pl nz na pe nc
 cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000206
@@ -520,7 +520,7 @@ eax=00000001 ebx=00000000 ecx=00000000 edx=000003c0 esi=00000000 edi=0122f6e0
 eip=76984377 esp=010ff7a0 ebp=010ff7dc iopl=0         nv up ei pl nz na pe nc
 cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000206
 coml2!DfCreateDocfile+0x132:
-76984377 8d044504000000  lea     eax,[eax*2+4]
+76984377 8d044504000000  lea     eax,[eax*2+4]   // 6就是从这里来的  也就是说   a5控制了coml2!DfFromName的第一个参数   当然，只有a5还是不够的，因为ecx也会对该函数的a1产生影响，而ecx的值又来自于grfMode，因此coml2!DfFromName的a1由coml2!DfCreateDocfile.asm的a5和StgCreateDocfile的a2（grfmode）共同决定
 eax=00000006 ebx=00000000 ecx=00000000 edx=000003c0 esi=00000000 edi=0122f6e0
 eip=7698437e esp=010ff7a0 ebp=010ff7dc iopl=0         nv up ei pl nz na pe nc
 cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000206
