@@ -93,7 +93,7 @@ typedef struct _UNICODE_STRING {
 	USHORT MaximumLength;
 	PWSTR  Buffer;
 } UNICODE_STRING;
- 
+
 
 typedef NTSTATUS(NTAPI *PFN_NTQUERYSYSTEMINFORMATION)(
 	ULONG SystemInformationClass,
@@ -113,44 +113,45 @@ typedef struct _SYSTEM_BIGPOOL_ENTRY {
 		ULONG TagUlong;
 	};
 	// ULONG PoolType;  // 根据我实际测试的结果，根本看不到pooltype，他只有va、size和tag，这个结构体一共就0xc字节  chatgpt骗我
+	// 错了，size不是c  由于padding的存在实际上 是8+4+padding+4+padding -> 18h
 } SYSTEM_BIGPOOL_ENTRY;
 
 typedef struct _SYSTEM_BIGPOOL_INFORMATION {
 	ULONG Count;
 	SYSTEM_BIGPOOL_ENTRY AllocatedInfo[1]; // variable size array
 } SYSTEM_BIGPOOL_INFORMATION;
-int wmain(int argc, wchar_t* argv[]) { 
+int wmain(int argc, wchar_t* argv[]) {
 	HMODULE ntdll = GetModuleHandleA("ntdll.dll");
 	PFN_NTQUERYSYSTEMINFORMATION NtQuerySystemInformation =
 		(PFN_NTQUERYSYSTEMINFORMATION)GetProcAddress(ntdll, "NtQuerySystemInformation");
 
-		// Note: This is poor programming (hardcoding 4MB).
-		// The correct way would be to issue the system call
-		// twice, and use the resultLength of the first call
-		// to dynamically size the buffer to the correct size
-		//
-	DWORD64	bigPoolInfo2 =(DWORD64) malloc(
-			4 * 1024 * 1024);
- 
+	// Note: This is poor programming (hardcoding 4MB).
+	// The correct way would be to issue the system call
+	// twice, and use the resultLength of the first call
+	// to dynamically size the buffer to the correct size
+	//
+	DWORD64	bigPoolInfo2 = (DWORD64)malloc(
+		4 * 1024 * 1024);
+
 #define SystemBigPoolInformation 0x42
 	DWORD resultLength = 0;
 	NTSTATUS res = NtQuerySystemInformation(SystemBigPoolInformation,
 		(PVOID)bigPoolInfo2,
 		4 * 1024 * 1024,
 		&resultLength);
-	 
+
 
 
 	SYSTEM_BIGPOOL_INFORMATION* bigPoolInfo = (SYSTEM_BIGPOOL_INFORMATION*)bigPoolInfo2;
 	printf("big pool structure addr: 0x%p\n", bigPoolInfo);
 	printf("big page count: 0x%x\n", bigPoolInfo->Count);
 	system("pause");
-	SYSTEM_BIGPOOL_ENTRY* entry =(SYSTEM_BIGPOOL_ENTRY*) &bigPoolInfo->AllocatedInfo;
+	SYSTEM_BIGPOOL_ENTRY* entry = (SYSTEM_BIGPOOL_ENTRY*)&bigPoolInfo->AllocatedInfo;
 	printf("TYPE     ADDRESS\tBYTES\tTAG\n");
 	for (int i = 0; i < bigPoolInfo->Count; i++)
 	{
 		printf("%s0x%p\t0x%lx\t%c%c%c%c\n",
-			((DWORD)(entry[i].VirtualAddress)& 1) == 1 ?
+			((DWORD)(entry[i].VirtualAddress) & 1) == 1 ?
 			"Nonpaged " : "Paged    ",
 			(DWORD)(entry[i].VirtualAddress)&(~1),
 			entry[i].SizeInBytes,
@@ -158,8 +159,8 @@ int wmain(int argc, wchar_t* argv[]) {
 			entry[i].Tag[1],
 			entry[i].Tag[2],
 			entry[i].Tag[3]);
-		 
-	}  
-	 
+
+	}
+
 	return 0;
 }
